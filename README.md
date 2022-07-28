@@ -1,7 +1,9 @@
 # jhttp
+
 jhttp, which is a http client tool may have good experience like postman
 
 ## Example code
+
 **http get**
 
 ~~~go
@@ -18,17 +20,19 @@ func main() {
 	client := http.NewClient(
 		http.AddHeader("Accept", "application/vnd.github.v3+json"),
 	)
-	resp, err := client.Get("https://api.github.com/repos/jiuhuche120/jhttp", nil)
+	result, err := client.Get("https://api.github.com/repos/jiuhuche120/jhttp", nil)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	result, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println(err)
-		return
+	if result.IsSuccess() {
+		body, err := result.Body()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Println(string(body))
 	}
-	fmt.Println(string(result))
 }
 ~~~
 
@@ -52,17 +56,19 @@ func main() {
 		http.AddParams("page", "1"),
 		http.AddParams("per_page", "30"),
 	}
-	resp, err := client.Get("https://api.github.com/repos/jiuhuche120/jhttp/tags", nil, opts...)
+	result, err := client.Get("https://api.github.com/repos/jiuhuche120/jhttp/tags", nil, opts...)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	result, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println(err)
-		return
+	if result.IsSuccess() {
+		body, err := result.Body()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Println(string(body))
 	}
-	fmt.Println(string(result))
 }
 ~~~
 
@@ -85,17 +91,19 @@ func main() {
 		http.AddHeader("Authorization", "token XXX"),
 	)
 	value := gjson.Parse("{\"new_name\":\"main\"}").Value()
-	resp, err := client.Post("https://api.github.com/repos/jiuhuche120/jhttp/branches/master/rename", value)
+	result, err := client.Post("https://api.github.com/repos/jiuhuche120/jhttp/branches/master/rename", value)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	result, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println(err)
-		return
+	if result.IsSuccess() {
+		body, err := result.Body()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Println(string(body))
 	}
-	fmt.Println(string(result))
 }
 ~~~
 
@@ -117,16 +125,18 @@ func main() {
 		http.AddFormParams("key", "value", http.Text),
 		http.AddFormParams("file", "file path", http.File),
 	)
-	resp, err := client.PostForm("https://api.github.com/repos/jiuhuche120/jhttp/branches/master/rename",form)
+	result, err := client.PostForm("https://api.github.com/repos/jiuhuche120/jhttp/branches/master/rename", form)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	result, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println(err)
-		return
+	if result.IsSuccess() {
+		body, err := result.Body()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Println(string(body))
 	}
-	fmt.Println(string(result))
 }
 ~~~

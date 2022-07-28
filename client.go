@@ -34,7 +34,11 @@ func AddParams(key, value string) ParamsOption {
 	}
 }
 
-func (c *Client) Get(url string, data interface{}, opts ...ParamsOption) (*http.Response, error) {
+func (c *Client) AddCookie(cookie []*http.Cookie) {
+	c.Cookie = cookie
+}
+
+func (c *Client) Get(url string, data interface{}, opts ...ParamsOption) (*Result, error) {
 	if c.http == nil {
 		c.http = http.DefaultClient
 	}
@@ -50,9 +54,11 @@ func (c *Client) Get(url string, data interface{}, opts ...ParamsOption) (*http.
 	if err != nil {
 		return nil, err
 	}
+	// set http header
 	for k, v := range c.Header {
 		req.Header.Set(k, v)
 	}
+	// set http cookie
 	for _, cookie := range c.Cookie {
 		req.AddCookie(cookie)
 	}
@@ -60,10 +66,10 @@ func (c *Client) Get(url string, data interface{}, opts ...ParamsOption) (*http.
 	if err != nil {
 		return nil, err
 	}
-	return resp, nil
+	return &Result{*resp}, nil
 }
 
-func (c *Client) Post(url string, data interface{}) (*http.Response, error) {
+func (c *Client) Post(url string, data interface{}) (*Result, error) {
 	if c.http == nil {
 		c.http = http.DefaultClient
 	}
@@ -72,9 +78,11 @@ func (c *Client) Post(url string, data interface{}) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
+	// set http header
 	for k, v := range c.Header {
 		req.Header.Set(k, v)
 	}
+	// set http cookie
 	for _, cookie := range c.Cookie {
 		req.AddCookie(cookie)
 	}
@@ -82,10 +90,10 @@ func (c *Client) Post(url string, data interface{}) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	return resp, nil
+	return &Result{*resp}, nil
 }
 
-func (c *Client) PostForm(url string, formData *FormData) (*http.Response, error) {
+func (c *Client) PostForm(url string, formData *FormData) (*Result, error) {
 	if c.http == nil {
 		c.http = http.DefaultClient
 	}
@@ -93,10 +101,13 @@ func (c *Client) PostForm(url string, formData *FormData) (*http.Response, error
 	if err != nil {
 		return nil, err
 	}
+	// set http header
 	for k, v := range c.Header {
 		req.Header.Set(k, v)
 	}
+	// set Form Content-Type
 	req.Header.Set("Content-Type", formData.Write.FormDataContentType())
+	// set http cookie
 	for _, cookie := range c.Cookie {
 		req.AddCookie(cookie)
 	}
@@ -104,9 +115,5 @@ func (c *Client) PostForm(url string, formData *FormData) (*http.Response, error
 	if err != nil {
 		return nil, err
 	}
-	return resp, nil
-}
-
-func (c *Client) AddCookie(cookie []*http.Cookie) {
-	c.Cookie = cookie
+	return &Result{*resp}, nil
 }
