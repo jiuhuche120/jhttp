@@ -23,9 +23,13 @@ func SetMaxReadSize(size int) {
 
 type Result struct {
 	resp http.Response
+	body []byte
 }
 
 func (result *Result) Body() ([]byte, error) {
+	if result.body != nil {
+		return result.body, nil
+	}
 	readSlice := make([]byte, ReadSize)
 	var data []byte
 	for size, err := result.resp.Body.Read(readSlice); size != 0; size, err = result.resp.Body.Read(readSlice) {
@@ -37,6 +41,7 @@ func (result *Result) Body() ([]byte, error) {
 			return nil, err
 		}
 	}
+	result.body = data
 	return data, nil
 }
 

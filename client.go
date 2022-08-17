@@ -2,7 +2,7 @@ package jhttp
 
 import (
 	"bytes"
-	"fmt"
+	"encoding/json"
 	"net/http"
 )
 
@@ -61,10 +61,12 @@ func (c *Client) doReq(url string, reqType string, data interface{}) (*Result, e
 		return c.doBytes(url, reqType, data.([]byte))
 	case string:
 		return c.doString(url, reqType, data.(string))
-	case nil:
-		return c.doBytes(url, reqType, nil)
 	default:
-		return nil, fmt.Errorf("unsupported data type")
+		data, err := json.Marshal(data)
+		if err != nil {
+			return nil, err
+		}
+		return c.doBytes(url, reqType, data)
 	}
 }
 
@@ -110,5 +112,5 @@ func (c *Client) do(req *http.Request) (*Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Result{*resp}, nil
+	return &Result{*resp, nil}, nil
 }
