@@ -1,8 +1,8 @@
-package http
+package jhttp
 
 import (
 	"bytes"
-	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -39,9 +39,6 @@ func (c *Client) AddCookie(cookie []*http.Cookie) {
 }
 
 func (c *Client) Get(url string, data interface{}, opts ...ParamsOption) (*Result, error) {
-	if c.http == nil {
-		c.http = http.DefaultClient
-	}
 	url = url + "?"
 	for i := 0; i < len(opts); i++ {
 		url = url + opts[i]()
@@ -49,64 +46,62 @@ func (c *Client) Get(url string, data interface{}, opts ...ParamsOption) (*Resul
 			url = url + "&"
 		}
 	}
-	jsonStr, _ := json.Marshal(data)
-	req, err := http.NewRequest("GET", url, bytes.NewBuffer(jsonStr))
-	if err != nil {
-		return nil, err
-	}
-	// set http header
-	for k, v := range c.Header {
-		req.Header.Set(k, v)
-	}
-	// set http cookie
-	for _, cookie := range c.Cookie {
-		req.AddCookie(cookie)
-	}
-	resp, err := c.http.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	return &Result{*resp}, nil
+	return c.doReq(url, "GET", data)
 }
 
 func (c *Client) Post(url string, data interface{}) (*Result, error) {
-	if c.http == nil {
-		c.http = http.DefaultClient
-	}
-	jsonStr, _ := json.Marshal(data)
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
-	if err != nil {
-		return nil, err
-	}
-	// set http header
-	for k, v := range c.Header {
-		req.Header.Set(k, v)
-	}
-	// set http cookie
-	for _, cookie := range c.Cookie {
-		req.AddCookie(cookie)
-	}
-	resp, err := c.http.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	return &Result{*resp}, nil
+	return c.doReq(url, "POST", data)
 }
 
-func (c *Client) PostForm(url string, formData *FormData) (*Result, error) {
-	if c.http == nil {
-		c.http = http.DefaultClient
+func (c *Client) doReq(url string, reqType string, data interface{}) (*Result, error) {
+	switch data.(type) {
+	case FormData:
+		return c.doForm(url, reqType, data.(*FormData))
+	case []byte:
+		return c.doBytes(url, reqType, data.([]byte))
+	case string:
+		return c.doString(url, reqType, data.(string))
+	case nil:
+		return c.doBytes(url, reqType, nil)
+	default:
+		return nil, fmt.Errorf("unsupported data type")
 	}
-	req, err := http.NewRequest("POST", url, formData.Buf)
+}
+
+func (c *Client) doBytes(url string, reqType string, data []byte) (*Result, error) {
+	req, err := http.NewRequest(reqType, url, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}
-	// set http header
-	for k, v := range c.Header {
-		req.Header.Set(k, v)
+	return c.do(req)
+}
+
+func (c *Client) doString(url string, reqType string, data string) (*Result, error) {
+	req, err := http.NewRequest(reqType, url, bytes.NewBufferString(data))
+	if err != nil {
+		return nil, err
+	}
+	return c.do(req)
+}
+
+func (c *Client) doForm(url string, reqType string, formData *FormData) (*Result, error) {
+	req, err := http.NewRequest(reqType, url, formData.Buf)
+	if err != nil {
+		return nil, err
 	}
 	// set Form Content-Type
 	req.Header.Set("Content-Type", formData.Write.FormDataContentType())
+	return c.do(req)
+}
+
+func (c *Client) do(req *http.Request) (*Result, error) {
+	if c.http == nil {
+		c.http = http.DefaultClient
+	}
+	// set http header
+	for k, v := range c.Header {
+		req.Header.Set(k, v)
+	}
 	// set http cookie
 	for _, cookie := range c.Cookie {
 		req.AddCookie(cookie)

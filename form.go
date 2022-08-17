@@ -1,4 +1,4 @@
-package http
+package jhttp
 
 import (
 	"bytes"
@@ -10,6 +10,10 @@ import (
 	"path/filepath"
 	"strings"
 )
+
+/*
+from.go is used to post form-data requests
+*/
 
 type FieldType uint8
 type ContentType string
@@ -113,11 +117,11 @@ func (f form) build() (*FormData, error) {
 }
 
 func getContentType(name string) ContentType {
-	strs := strings.Split(name, ".")
-	if len(strs) != 2 {
+	str := strings.Split(name, ".")
+	if len(str) != 2 {
 		return Byte
 	}
-	switch strs[1] {
+	switch str[1] {
 	case "zip":
 		return Zip
 	case "json":
