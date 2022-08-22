@@ -14,7 +14,7 @@ func AddXFormParams(key, value string) XFormOption {
 	}
 }
 
-func NewXForm(opts ...XFormOption) string {
+func NewXFormParams(opts ...XFormOption) string {
 	data := url.Values{}
 	for _, opt := range opts {
 		opt(&data)

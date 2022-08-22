@@ -56,7 +56,7 @@ func CreateFormFile(fieldName, fileName, contentType string, w *multipart.Writer
 	return w.CreatePart(h)
 }
 
-func NewForm(opts ...FormOption) *FormData {
+func NewFormParams(opts ...FormOption) *FormData {
 	var form form
 	for _, opt := range opts {
 		opt(&form)
