@@ -4,40 +4,61 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"time"
 )
 
 type ClientOption = func(*Client)
 type ParamsOption = func() string
 type Client struct {
 	http   *http.Client
-	Header map[string]string
-	Cookie []*http.Cookie
+	header map[string]string
+	cookie []*http.Cookie
+	retry  int
 }
 
+// NewClient returns a new Client with ClientOption.
 func NewClient(opts ...ClientOption) *Client {
-	client := &Client{http: http.DefaultClient, Header: map[string]string{}}
+	client := &Client{http: http.DefaultClient, header: map[string]string{}, retry: 0}
 	for _, opt := range opts {
 		opt(client)
 	}
 	return client
 }
 
+// AddHeader add a header to the client.
 func AddHeader(key, value string) ClientOption {
 	return func(client *Client) {
-		client.Header[key] = value
+		client.header[key] = value
 	}
 }
 
+// SetTimeout set the timeout for the client.
+func SetTimeout(timeout time.Duration) ClientOption {
+	return func(client *Client) {
+		client.http.Timeout = timeout
+	}
+}
+
+// SetRetry set the number of retry for the client. Default is 0.
+func SetRetry(retry int) ClientOption {
+	return func(client *Client) {
+		client.retry = retry
+	}
+}
+
+// AddParams set the url parameters for the client.
 func AddParams(key, value string) ParamsOption {
 	return func() string {
 		return key + "=" + value
 	}
 }
 
+// AddCookie set the cookie for the client.
 func (c *Client) AddCookie(cookie []*http.Cookie) {
-	c.Cookie = cookie
+	c.cookie = cookie
 }
 
+// Get send a GET to the specified URL.
 func (c *Client) Get(url string, data interface{}, opts ...ParamsOption) (*Result, error) {
 	url = url + "?"
 	for i := 0; i < len(opts); i++ {
@@ -49,10 +70,12 @@ func (c *Client) Get(url string, data interface{}, opts ...ParamsOption) (*Resul
 	return c.doReq(url, "GET", data)
 }
 
+// Post send a POST to the specified URL.
 func (c *Client) Post(url string, data interface{}) (*Result, error) {
 	return c.doReq(url, "POST", data)
 }
 
+// doReq send appropriate request to the specified URL.
 func (c *Client) doReq(url string, reqType string, data interface{}) (*Result, error) {
 	switch data.(type) {
 	case FormData:
@@ -70,6 +93,7 @@ func (c *Client) doReq(url string, reqType string, data interface{}) (*Result, e
 	}
 }
 
+// doBytes send []byte data to the specified URL.
 func (c *Client) doBytes(url string, reqType string, data []byte) (*Result, error) {
 	req, err := http.NewRequest(reqType, url, bytes.NewBuffer(data))
 	if err != nil {
@@ -78,6 +102,7 @@ func (c *Client) doBytes(url string, reqType string, data []byte) (*Result, erro
 	return c.do(req)
 }
 
+// doString send string data to the specified URL.
 func (c *Client) doString(url string, reqType string, data string) (*Result, error) {
 	req, err := http.NewRequest(reqType, url, bytes.NewBufferString(data))
 	if err != nil {
@@ -86,31 +111,37 @@ func (c *Client) doString(url string, reqType string, data string) (*Result, err
 	return c.do(req)
 }
 
+// doForm send FormData to the specified URL.
 func (c *Client) doForm(url string, reqType string, formData *FormData) (*Result, error) {
-	req, err := http.NewRequest(reqType, url, formData.Buf)
+	req, err := http.NewRequest(reqType, url, formData.buf)
 	if err != nil {
 		return nil, err
 	}
 	// set Form Content-Type
-	req.Header.Set("Content-Type", formData.Write.FormDataContentType())
+	req.Header.Set("Content-Type", formData.writer.FormDataContentType())
 	return c.do(req)
 }
 
+// do send an HTTP request and returns an HTTP response. if the request is failed, the client will retry the request until the number of retry.
 func (c *Client) do(req *http.Request) (*Result, error) {
+	var resp *http.Response
+	var err error
 	if c.http == nil {
 		c.http = http.DefaultClient
 	}
 	// set http header
-	for k, v := range c.Header {
+	for k, v := range c.header {
 		req.Header.Set(k, v)
 	}
 	// set http cookie
-	for _, cookie := range c.Cookie {
+	for _, cookie := range c.cookie {
 		req.AddCookie(cookie)
 	}
-	resp, err := c.http.Do(req)
-	if err != nil {
-		return nil, err
+	for i := 0; i < c.retry+1; i++ {
+		resp, err = c.http.Do(req)
+		if err == nil && resp.StatusCode == http.StatusOK {
+			break
+		}
 	}
-	return &Result{*resp, nil}, nil
+	return NewResult(resp), err
 }

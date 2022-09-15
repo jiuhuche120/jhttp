@@ -11,9 +11,7 @@ import (
 	"strings"
 )
 
-/*
-from.go is used to post form-data requests
-*/
+//from.go is used to post form-data requests
 
 type FieldType uint8
 type ContentType string
@@ -37,8 +35,8 @@ type form struct {
 	fieldTypes []FieldType
 }
 type FormData struct {
-	Buf   *bytes.Buffer
-	Write *multipart.Writer
+	buf    *bytes.Buffer
+	writer *multipart.Writer
 }
 
 var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
@@ -47,7 +45,8 @@ func escapeQuotes(s string) string {
 	return quoteEscaper.Replace(s)
 }
 
-func CreateFormFile(fieldName, fileName, contentType string, w *multipart.Writer) (io.Writer, error) {
+// createFormFile overwrite the multipart.CreateFormFile use self ContentType field.
+func createFormFile(fieldName, fileName, contentType string, w *multipart.Writer) (io.Writer, error) {
 	h := make(textproto.MIMEHeader)
 	h.Set("Content-Disposition",
 		fmt.Sprintf(`form-data; name="%s"; filename="%s"`,
@@ -56,6 +55,7 @@ func CreateFormFile(fieldName, fileName, contentType string, w *multipart.Writer
 	return w.CreatePart(h)
 }
 
+// NewFormParams create a FormData with FormOption.
 func NewFormParams(opts ...FormOption) *FormData {
 	var form form
 	for _, opt := range opts {
@@ -68,6 +68,7 @@ func NewFormParams(opts ...FormOption) *FormData {
 	return formData
 }
 
+// AddFormParams add key value pairs to the form, support Text and File type.
 func AddFormParams(field string, value string, fieldType FieldType) FormOption {
 	return func(form *form) {
 		form.fields = append(form.fields, field)
@@ -76,6 +77,7 @@ func AddFormParams(field string, value string, fieldType FieldType) FormOption {
 	}
 }
 
+// build create FormData by form.
 func (f form) build() (*FormData, error) {
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
@@ -91,7 +93,7 @@ func (f form) build() (*FormData, error) {
 			}
 			fileName := filepath.Base(value)
 			contentType := getContentType(fileName)
-			part, err := CreateFormFile(field, fileName, string(contentType), w)
+			part, err := createFormFile(field, fileName, string(contentType), w)
 			if err != nil {
 				return nil, err
 			}
@@ -111,13 +113,14 @@ func (f form) build() (*FormData, error) {
 		return nil, err
 	}
 	return &FormData{
-		Buf:   &b,
-		Write: w,
+		buf:    &b,
+		writer: w,
 	}, nil
 }
 
-func getContentType(name string) ContentType {
-	str := strings.Split(name, ".")
+// getContentType returns ContentType for the given filename
+func getContentType(filename string) ContentType {
+	str := strings.Split(filename, ".")
 	if len(str) != 2 {
 		return Byte
 	}

@@ -13,6 +13,7 @@ type JsonStruct struct {
 	jsonMp map[string]interface{}
 }
 
+// NewJsonParams create json data by JsonOption.
 func NewJsonParams(opts ...JsonOption) []byte {
 	var jsonStruct JsonStruct
 	jsonStruct.jsonMp = make(map[string]interface{})
@@ -44,6 +45,7 @@ func NewJsonParams(opts ...JsonOption) []byte {
 	return data
 }
 
+// AddJsonParam add key value pairs to the JsonStruct.
 func AddJsonParam[T string | bool | int | int8 | int16 | int32 | int64 | float32 | float64](key string, value T) JsonOption {
 	return func(jsonStruct *JsonStruct) {
 		jsonStruct.jsonMp[key] = value

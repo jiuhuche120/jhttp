@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 )
 
 var (
@@ -13,22 +14,37 @@ var (
 	MaxReadSize = 1024 * 1024 * 100 //100 MB
 )
 
+// SetReadSize set the slice size to read from the response body
 func SetReadSize(size int) {
 	ReadSize = size
 }
 
+// SetMaxReadSize set the max read size to read from the response body
 func SetMaxReadSize(size int) {
 	MaxReadSize = size
 }
 
 type Result struct {
-	resp http.Response
-	body []byte
+	resp  *http.Response
+	cache []byte
+	lock  sync.Mutex
 }
 
+// NewResult returns a Result with the given response
+func NewResult(resp *http.Response) *Result {
+	return &Result{
+		resp:  resp,
+		cache: nil,
+		lock:  sync.Mutex{},
+	}
+}
+
+// Body read http body from the Result and cache the body
 func (result *Result) Body() ([]byte, error) {
-	if result.body != nil {
-		return result.body, nil
+	result.lock.Lock()
+	defer result.lock.Unlock()
+	if result.cache != nil {
+		return result.cache, nil
 	}
 	readSlice := make([]byte, ReadSize)
 	var data []byte
@@ -41,59 +57,67 @@ func (result *Result) Body() ([]byte, error) {
 			return nil, err
 		}
 	}
-	result.body = data
+	result.cache = data
 	return data, nil
 }
 
-func (result *Result) JsonUnmarshal(data interface{}) error {
+// JsonUnmarshal json unmarshal the result body into the given type
+func (result *Result) JsonUnmarshal(typ interface{}) error {
 	body, err := result.Body()
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal(body, data)
+	err = json.Unmarshal(body, typ)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
+// Header return Result header
 func (result *Result) Header() http.Header {
 	return result.resp.Header
 }
 
+// Cookies return Result cookies
 func (result *Result) Cookies() []*http.Cookie {
 	return result.resp.Cookies()
 }
 
+// StatusCode return Result statusCode
 func (result *Result) StatusCode() int {
 	return result.resp.StatusCode
 }
 
+// Status return Result status
 func (result *Result) Status() string {
 	return result.resp.Status
 }
 
+// IsSuccess return Result success or fail
 func (result *Result) IsSuccess() bool {
 	return result.StatusCode() == http.StatusOK
 }
 
-func (result *Result) Contains(key string) bool {
+// Contains return whether Result contains str
+func (result *Result) Contains(str string) bool {
 	body, err := result.Body()
 	if err != nil {
 		return false
 	}
-	if strings.Contains(string(body), key) {
+	if strings.Contains(string(body), str) {
 		return true
 	}
 	return false
 }
 
-func (result *Result) Equal(key string) bool {
+// Equal return whether Result equal str
+func (result *Result) Equal(str string) bool {
 	body, err := result.Body()
 	if err != nil {
 		return false
 	}
-	if string(body) == key {
+	if string(body) == str {
 		return true
 	}
 	return false
