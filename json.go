@@ -28,8 +28,14 @@ func NewJsonParams(opts ...JsonOption) []byte {
 		switch value.(type) {
 		case string:
 			str.WriteString(fmt.Sprintf("\"%v\":\"%v\"", key, value))
-		default:
+		case bool, int, int8, int16, int32, int64, float32, float64:
 			str.WriteString(fmt.Sprintf("\"%v\":%v", key, value))
+		default:
+			val, err := json.Marshal(value)
+			if err != nil {
+				return nil
+			}
+			str.WriteString(fmt.Sprintf("\"%v\":%v", key, string(val)))
 		}
 		if index < l {
 			index++
@@ -46,7 +52,7 @@ func NewJsonParams(opts ...JsonOption) []byte {
 }
 
 // AddJsonParam add key value pairs to the JsonStruct.
-func AddJsonParam[T string | bool | int | int8 | int16 | int32 | int64 | float32 | float64](key string, value T) JsonOption {
+func AddJsonParam(key string, value interface{}) JsonOption {
 	return func(jsonStruct *JsonStruct) {
 		jsonStruct.jsonMp[key] = value
 	}
