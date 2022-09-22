@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+
+	"github.com/tidwall/gjson"
 )
 
 var (
@@ -75,8 +77,8 @@ func (result *Result) JsonUnmarshal(typ interface{}) error {
 }
 
 // Header return Result header
-func (result *Result) Header() http.Header {
-	return result.resp.Header
+func (result *Result) Header() *http.Header {
+	return &result.resp.Header
 }
 
 // Cookies return Result cookies
@@ -121,4 +123,14 @@ func (result *Result) Equal(str string) bool {
 		return true
 	}
 	return false
+}
+
+// Get return gjson.Result by path
+func (result *Result) Get(path string) (*gjson.Result, error) {
+	body, err := result.Body()
+	if err != nil {
+		return nil, err
+	}
+	val := gjson.Get(string(body), path)
+	return &val, nil
 }
