@@ -50,7 +50,9 @@ func (result *Result) Body() ([]byte, error) {
 	}
 	readSlice := make([]byte, ReadSize)
 	var data []byte
-	for size, err := result.resp.Body.Read(readSlice); size != 0; size, err = result.resp.Body.Read(readSlice) {
+	var size int
+	var err error
+	for size, err = result.resp.Body.Read(readSlice); size != 0; size, err = result.resp.Body.Read(readSlice) {
 		data = append(data, readSlice[:size]...)
 		if len(data) > MaxReadSize {
 			return nil, fmt.Errorf("too many bytes to read")
@@ -58,6 +60,9 @@ func (result *Result) Body() ([]byte, error) {
 		if err != nil && err != io.EOF {
 			return nil, err
 		}
+	}
+	if err != nil && err != io.EOF {
+		return nil, err
 	}
 	result.cache = data
 	return data, nil

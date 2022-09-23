@@ -56,7 +56,7 @@ func createFormFile(fieldName, fileName, contentType string, w *multipart.Writer
 }
 
 // NewFormParams create a FormData with FormOption.
-func NewFormParams(opts ...FormOption) *FormData {
+func NewFormParams(opts ...FormOption) FormData {
 	var form form
 	for _, opt := range opts {
 		opt(&form)
@@ -65,7 +65,7 @@ func NewFormParams(opts ...FormOption) *FormData {
 	if err != nil {
 		panic(err)
 	}
-	return formData
+	return *formData
 }
 
 // AddFormParams add key value pairs to the form, support Text and File type.

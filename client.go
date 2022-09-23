@@ -79,7 +79,7 @@ func (c *Client) Post(url string, data interface{}) (*Result, error) {
 func (c *Client) doReq(url string, reqType string, data interface{}) (*Result, error) {
 	switch data.(type) {
 	case FormData:
-		return c.doForm(url, reqType, data.(*FormData))
+		return c.doForm(url, reqType, data.(FormData))
 	case []byte:
 		return c.doBytes(url, reqType, data.([]byte))
 	case string:
@@ -112,7 +112,7 @@ func (c *Client) doString(url string, reqType string, data string) (*Result, err
 }
 
 // doForm send FormData to the specified URL.
-func (c *Client) doForm(url string, reqType string, formData *FormData) (*Result, error) {
+func (c *Client) doForm(url string, reqType string, formData FormData) (*Result, error) {
 	req, err := http.NewRequest(reqType, url, formData.buf)
 	if err != nil {
 		return nil, err
