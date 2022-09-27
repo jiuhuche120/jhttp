@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-
-	"github.com/tidwall/gjson"
 )
 
 type JsonOption func(jsonStruct *JsonStruct)
@@ -43,12 +41,7 @@ func NewJsonParams(opts ...JsonOption) []byte {
 		}
 	}
 	str.WriteString("}")
-	value := gjson.Parse(str.String()).Value()
-	data, err := json.Marshal(value)
-	if err != nil {
-		panic(err)
-	}
-	return data
+	return []byte(str.String())
 }
 
 // AddJsonParam add key value pairs to the JsonStruct.
