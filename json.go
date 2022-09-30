@@ -12,6 +12,7 @@ type JsonStruct struct {
 }
 
 // NewJsonParams create json data by JsonOption.
+// NewJsonParams only create one json not array json
 func NewJsonParams(opts ...JsonOption) []byte {
 	var jsonStruct JsonStruct
 	jsonStruct.jsonMp = make(map[string]interface{})
