@@ -1,8 +1,9 @@
 package jhttp
 
 import (
-	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type MyStruct struct {
@@ -19,5 +20,5 @@ func TestNewJsonParams(t *testing.T) {
 		AddJsonParam("k1", "v1"),
 		AddJsonParam("k2", arr),
 	)
-	fmt.Println(string(data))
+	require.Equal(t, "{\"k1\":\"v1\",\"k2\":[{\"key\":\"k1\",\"value\":\"v1\"},{\"key\":\"k2\",\"value\":\"v2\"},{\"key\":\"k3\",\"value\":\"v3\"}]}", string(data))
 }

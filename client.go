@@ -142,6 +142,14 @@ func (c *Client) do(req *http.Request) (*Result, error) {
 		if err == nil && resp.StatusCode == http.StatusOK {
 			break
 		}
+		time.Sleep(time.Millisecond * 500)
 	}
-	return NewResult(resp), err
+	if err != nil {
+		return nil, err
+	}
+	result, err := NewResult(resp)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }

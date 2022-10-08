@@ -31,5 +31,17 @@ func TestGet(t *testing.T) {
 }
 
 func TestPost(t *testing.T) {
-
+	client := NewClient(
+		AddHeader("Accept", "application/vnd.github.v3+json"),
+		AddHeader("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36"),
+		AddHeader("Authorization", "Bearer <YOUR-TOKEN>"),
+	)
+	jsonParams := NewJsonParams(
+		AddJsonParam("description", "Example of a gist"),
+		AddJsonParam("public", false),
+		AddJsonParam("files", "{\"README.md\":{\"content\":\"Hello World\"}}"),
+	)
+	resp, err := client.Post("https://api.github.com/gists", jsonParams)
+	require.Nil(t, err)
+	require.Equal(t, true, resp.Contains("Bad credentials"))
 }

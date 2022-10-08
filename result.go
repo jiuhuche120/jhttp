@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"sync"
 
 	"github.com/tidwall/gjson"
 )
@@ -29,25 +28,14 @@ func SetMaxReadSize(size int) {
 type Result struct {
 	resp  *http.Response
 	cache []byte
-	lock  sync.Mutex
 }
 
 // NewResult returns a Result with the given response
-func NewResult(resp *http.Response) *Result {
-	return &Result{
-		resp:  resp,
-		cache: nil,
-		lock:  sync.Mutex{},
-	}
-}
-
-// Body read http body from the Result and cache the body
-func (result *Result) Body() ([]byte, error) {
-	result.lock.Lock()
-	defer result.lock.Unlock()
-	if result.cache != nil {
-		return result.cache, nil
-	}
+func NewResult(resp *http.Response) (*Result, error) {
+	var result Result
+	result.resp = resp
+	defer result.resp.Body.Close()
+	// cache the response body
 	readSlice := make([]byte, ReadSize)
 	var data []byte
 	var size int
@@ -65,7 +53,15 @@ func (result *Result) Body() ([]byte, error) {
 		return nil, err
 	}
 	result.cache = data
-	return data, nil
+	return &result, nil
+}
+
+// Body read http body from the Result and cache the body
+func (result *Result) Body() ([]byte, error) {
+	if result.cache != nil && len(result.cache) > 0 {
+		return result.cache, nil
+	}
+	return nil, fmt.Errorf("empty body to read")
 }
 
 // JsonUnmarshal json unmarshal the result body into the given type
