@@ -45,3 +45,12 @@ func TestPost(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, true, resp.Contains("Bad credentials"))
 }
+
+func TestWebsocket(t *testing.T) {
+	client := NewClient()
+	ws, err := client.WebSocket("ws://121.40.165.18:8800")
+	require.Nil(t, err)
+	_, msg, err := ws.ReadMessage()
+	require.Nil(t, err)
+	require.Contains(t, string(msg), "websocket")
+}

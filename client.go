@@ -3,22 +3,26 @@ package jhttp
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 type ClientOption = func(*Client)
 type ParamsOption = func() string
 type Client struct {
-	http   *http.Client
-	header map[string]string
-	cookie []*http.Cookie
-	retry  int
+	http      *http.Client
+	websocket *websocket.Dialer
+	header    map[string]string
+	cookie    []*http.Cookie
+	retry     int
 }
 
 // NewClient returns a new Client with ClientOption.
 func NewClient(opts ...ClientOption) *Client {
-	client := &Client{http: http.DefaultClient, header: map[string]string{}, retry: 0}
+	client := &Client{http: http.DefaultClient, websocket: websocket.DefaultDialer, header: map[string]string{}, retry: 0}
 	for _, opt := range opts {
 		opt(client)
 	}
@@ -73,6 +77,14 @@ func (c *Client) Get(url string, data interface{}, opts ...ParamsOption) (*Resul
 // Post send a POST to the specified URL.
 func (c *Client) Post(url string, data interface{}) (*Result, error) {
 	return c.doReq(url, "POST", data)
+}
+
+func (c *Client) WebSocket(url string) (*websocket.Conn, *http.Response, error) {
+	header := make(http.Header)
+	for k, v := range c.header {
+		header.Set(k, v)
+	}
+	return c.websocket.Dial(url, header)
 }
 
 // doReq send appropriate request to the specified URL.
@@ -146,6 +158,9 @@ func (c *Client) do(req *http.Request) (*Result, error) {
 	}
 	if err != nil {
 		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("status code: %d", resp.StatusCode)
 	}
 	result, err := NewResult(resp)
 	if err != nil {

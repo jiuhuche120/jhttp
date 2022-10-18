@@ -3,6 +3,7 @@ module github.com/jiuhuche120/jhttp
 go 1.18
 
 require (
+	github.com/gorilla/websocket v1.5.1-0.20220712153730-af47554f343b
 	github.com/stretchr/testify v1.8.0
 	github.com/tidwall/gjson v1.14.3
 )
