@@ -97,6 +97,11 @@ func (result *Result) Status() string {
 	return result.resp.Status
 }
 
+// ContentLength return Result contentLength
+func (result *Result) ContentLength() int64 {
+	return result.resp.ContentLength
+}
+
 // IsSuccess return Result success or fail
 func (result *Result) IsSuccess() bool {
 	return result.StatusCode() == http.StatusOK
