@@ -3,6 +3,7 @@ package jhttp
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -26,6 +27,8 @@ func NewJsonParams(opts ...JsonOption) []byte {
 	for key, value := range jsonStruct.jsonMp {
 		switch value.(type) {
 		case string:
+			value = strconv.Quote(value.(string))
+			value = value.(string)[1 : len(value.(string))-1]
 			str.WriteString(fmt.Sprintf("\"%v\":\"%v\"", key, value))
 		case bool, int, int8, int16, int32, int64, float32, float64:
 			str.WriteString(fmt.Sprintf("\"%v\":%v", key, value))
