@@ -138,12 +138,16 @@ func (c *Client) do(req *http.Request) (*Result, error) {
 	for _, cookie := range c.cookie {
 		req.AddCookie(cookie)
 	}
+
 	for i := 0; i < c.retry+1; i++ {
 		resp, err = c.http.Do(req)
-		if err == nil && resp.StatusCode == http.StatusOK {
-			break
+		if err == nil {
+			if resp.StatusCode == http.StatusOK {
+				break
+			} else {
+				resp.Body.Close()
+			}
 		}
-		resp.Body.Close()
 		time.Sleep(time.Millisecond * 500)
 	}
 	if err != nil {

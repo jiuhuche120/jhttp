@@ -27,7 +27,8 @@ func NewJsonParams(opts ...JsonOption) []byte {
 		switch v := value.(type) {
 		case string:
 			// escape `"`
-			v = strconv.Quote(v)[1 : len(v)-1]
+			v = strconv.Quote(v)
+			v = v[1 : len(v)-1]
 			str.WriteString(fmt.Sprintf("\"%v\":\"%v\"", param, v))
 		case bool, int, int8, int16, int32, int64, float32, float64:
 			str.WriteString(fmt.Sprintf("\"%v\":%v", param, v))
