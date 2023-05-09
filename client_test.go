@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/require"
 )
 
@@ -48,9 +49,16 @@ func TestPost(t *testing.T) {
 
 func TestWebsocket(t *testing.T) {
 	client := NewClient()
-	ws, err := client.WebSocket("ws://121.40.165.18:8800")
+	ws, resp, err := client.WebSocket("ws://121.40.165.18:8800")
+	defer resp.Body.Close()
+	defer func(ws *websocket.Conn) {
+		err := ws.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(ws)
 	require.Nil(t, err)
 	_, msg, err := ws.ReadMessage()
 	require.Nil(t, err)
-	require.Contains(t, string(msg), "websocket")
+	require.Contains(t, string(msg), "服务端主动向你推送")
 }

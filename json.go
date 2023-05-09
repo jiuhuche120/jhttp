@@ -12,34 +12,33 @@ type JsonStruct struct {
 	jsonMp map[string]interface{}
 }
 
-// NewJsonParams create json data by JsonOption.
-// NewJsonParams only create one json not array json
 func NewJsonParams(opts ...JsonOption) []byte {
 	var jsonStruct JsonStruct
 	jsonStruct.jsonMp = make(map[string]interface{})
 	for _, opt := range opts {
 		opt(&jsonStruct)
 	}
+
 	str := strings.Builder{}
 	str.WriteString("{")
-	l := len(jsonStruct.jsonMp)
+	length := len(jsonStruct.jsonMp)
 	index := 1
-	for key, value := range jsonStruct.jsonMp {
-		switch value.(type) {
+	for param, value := range jsonStruct.jsonMp {
+		switch v := value.(type) {
 		case string:
-			value = strconv.Quote(value.(string))
-			value = value.(string)[1 : len(value.(string))-1]
-			str.WriteString(fmt.Sprintf("\"%v\":\"%v\"", key, value))
+			// escape `"`
+			v = strconv.Quote(v)[1 : len(v)-1]
+			str.WriteString(fmt.Sprintf("\"%v\":\"%v\"", param, v))
 		case bool, int, int8, int16, int32, int64, float32, float64:
-			str.WriteString(fmt.Sprintf("\"%v\":%v", key, value))
+			str.WriteString(fmt.Sprintf("\"%v\":%v", param, v))
 		default:
-			val, err := json.Marshal(value)
+			data, err := json.Marshal(v)
 			if err != nil {
 				return nil
 			}
-			str.WriteString(fmt.Sprintf("\"%v\":%v", key, string(val)))
+			str.WriteString(fmt.Sprintf("\"%v\":%v", param, string(data)))
 		}
-		if index < l {
+		if index < length {
 			index++
 			str.WriteString(",")
 		}
@@ -48,7 +47,6 @@ func NewJsonParams(opts ...JsonOption) []byte {
 	return []byte(str.String())
 }
 
-// AddJsonParam add key value pairs to the JsonStruct.
 func AddJsonParam(key string, value interface{}) JsonOption {
 	return func(jsonStruct *JsonStruct) {
 		jsonStruct.jsonMp[key] = value

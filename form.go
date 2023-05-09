@@ -45,7 +45,6 @@ func escapeQuotes(s string) string {
 	return quoteEscaper.Replace(s)
 }
 
-// createFormFile overwrite the multipart.CreateFormFile use self ContentType field.
 func createFormFile(fieldName, fileName, contentType string, w *multipart.Writer) (io.Writer, error) {
 	h := make(textproto.MIMEHeader)
 	h.Set("Content-Disposition",
@@ -55,7 +54,6 @@ func createFormFile(fieldName, fileName, contentType string, w *multipart.Writer
 	return w.CreatePart(h)
 }
 
-// NewFormParams create a FormData with FormOption.
 func NewFormParams(opts ...FormOption) (FormData, error) {
 	var form form
 	for _, opt := range opts {
@@ -68,7 +66,6 @@ func NewFormParams(opts ...FormOption) (FormData, error) {
 	return *formData, nil
 }
 
-// AddFormParams add key value pairs to the form, support Text and File type.
 func AddFormParams(field string, value string, fieldType FieldType) FormOption {
 	return func(form *form) {
 		form.fields = append(form.fields, field)
@@ -77,7 +74,6 @@ func AddFormParams(field string, value string, fieldType FieldType) FormOption {
 	}
 }
 
-// build create FormData by form.
 func (f form) build() (*FormData, error) {
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
@@ -118,7 +114,6 @@ func (f form) build() (*FormData, error) {
 	}, nil
 }
 
-// getContentType returns ContentType for the given filename
 func getContentType(filename string) ContentType {
 	str := strings.Split(filename, ".")
 	if len(str) != 2 {
