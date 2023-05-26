@@ -162,3 +162,7 @@ func (c *Client) do(req *http.Request) (*Result, error) {
 	}
 	return result, nil
 }
+
+func (c *Client) GetHeader(key string) string {
+	return c.header[key]
+}
